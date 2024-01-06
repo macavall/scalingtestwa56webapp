@@ -1,6 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using scalingtestwa56webapp.Models;
+using System;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace scalingtestwa56webapp.Controllers
 {
@@ -15,13 +19,31 @@ namespace scalingtestwa56webapp.Controllers
 
         public IActionResult Index()
         {
-            RunForFiveMinutes();
-
             return View();
         }
 
         public IActionResult Privacy()
         {
+            int input = 5;
+
+            try
+            {
+                if(Request.Query["value"].ToString() is not null)
+            {
+                    input = Convert.ToInt32(Request.Query["value"].ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                input = 5;
+            }
+
+            Task.Factory.StartNew(() =>
+            {
+                RunForFiveMinutes(input);
+            });
+
             return View();
         }
 
@@ -31,7 +53,7 @@ namespace scalingtestwa56webapp.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        static void RunForFiveMinutes()
+        static void RunForFiveMinutes(int seconds)
         {
             int coreCount = Environment.ProcessorCount;
 
@@ -46,7 +68,7 @@ namespace scalingtestwa56webapp.Controllers
             }
 
             // Delay for 5 minutes and then cancel all CPU-intensive tasks
-            Thread.Sleep(TimeSpan.FromMinutes(5));
+            Thread.Sleep(TimeSpan.FromSeconds(5));
             cts.Cancel();
 
             Task.WhenAll(tasks).Wait();
